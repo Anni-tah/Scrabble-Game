@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import "./Scrabbleboard.css";
-
-
+import { HTML5Backend } from "react-dnd-html5-backend";
+import TileSource from "./components/TileSource";
+import BoardTarget from "./components/BoardTarget";
+import { DndProvider } from "react-dnd";
 
 const BOARD_SIZE = 15;
+
 const SPECIAL_TILES = {
   tripleWordSquares: [[0, 0], [0, 7], [0, 14], [7, 0], [7, 14], [14, 0], [14, 7], [14, 14]],
   doubleWordSquares: [[1, 1], [2, 2], [3, 3], [4, 4], [10, 10], [11, 11], [12, 12], [13, 13],
@@ -42,26 +45,44 @@ const ScrabbleBoard = () => {
     return scores[letter] || 0;
   };
 
+  // move tile to a board
+  function moveTile(id, position){
+    setBoard((prevBoard) => {
+      const newBoard = prevBoard.map((row) => [...row]);
+      const letter = rackTiles.find(tile => tile === id);
+
+      if (!letter) return prevBoard;  
+      newBoard[position.row][position.col] = { id, letter };
+      return newBoard;
+
+  });
+  setRackTiles((prevTiles) => prevTiles.filter((tile) => tile !== id));
+  }
+
+  function returnTilesToRack(tileId){
+    setRackTiles((prevTiles)=>[...prevTiles, tileId]);
+    setBoard((prevBoard)=>
+      prevBoard.map((row)=>row.map((tile)=>(tile?.id===tileId? null: tile)))
+
+    );
+  }
+
   const renderCell = (row, col) => {
     const tile = board[row][col];
     return (
-      <div
-        key={`${row}-${col}`}
-        className={`board-cell ${getTileClass(row, col)} ${row === 7 && col === 7 ? 'center-star' : ''}`}
-      >
-        {tile ? (
-          <div className="letter-tile">
-            <span className="letter">{tile}</span>
-            <span className="points">{getLetterScore(tile)}</span>
-          </div>
-        ) : (
-          row === 7 && col === 7 ? "★" : ""
-        )}
-      </div>
+      <BoardTarget key={`${row} - ${col}`} row={row} col={col} position={{row,col}} moveTile={moveTile}>
+         <div className={`board-cell ${getTileClass(row, col)} ${row === 7 && col === 7 ? 'center-star' : ''}`}>
+          {tile ? <TileSource id={tile.id} letter={tile.letter} position={{row, col}} removeTile={()=>returnTilesToRack(tile.id)}/>: 
+            row===7 && col ===7 ? "★" : ""
+          }
+         </div>
+         </BoardTarget>
     );
-  };
+  }
+
 
   return (
+    <DndProvider backend={HTML5Backend}>
     <div className="scrabble-game">
       <div className="game-board">
         {[...Array(BOARD_SIZE)].map((_, row) =>
@@ -71,19 +92,17 @@ const ScrabbleBoard = () => {
       <div className="score-keeper">
         <div className="rack">
           {rackTiles.map((letter, index) => (
-            <div key={index} className="rack-tile">
-              <div className="letter-tile">
-                <span className="letter">{letter}</span>
-                <span className="points">{getLetterScore(letter)}</span>
-              </div>
-            </div>
+             <TileSource key={index} id={letter} letter={letter} position={null} removeTile={()=>returnTilesToRack(letter)}>
+             <span className="tile-score">{getLetterScore(letter)}</span>
+             </TileSource>
           ))}
         </div>
         <div className="player-score active">Player 1: 0</div>
         <div className="player-score">Player 2: 0</div>
       </div>
     </div>
+    </DndProvider>
   );
 };
 
-export default ScrabbleBoard;
+export default ScrabbleBoard; 
