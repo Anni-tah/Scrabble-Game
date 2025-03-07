@@ -93,7 +93,10 @@ const ScrabbleBoard = () => {
         <div className="rack">
           {rackTiles.map((letter, index) => (
              <TileSource key={index} id={letter} letter={letter} position={null} removeTile={()=>returnTilesToRack(letter)}>
-             <span className="tile-score">{getLetterScore(letter)}</span>
+              <div className="letter-tile">
+              <span className="tile-score">{getLetterScore(letter)}</span>
+              </div>
+            
              </TileSource>
           ))}
         </div>
