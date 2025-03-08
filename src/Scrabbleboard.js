@@ -5,12 +5,14 @@ import TileSource from "./components/TileSource";
 import BoardTarget from "./components/BoardTarget";
 import { DndProvider } from "react-dnd";
 const baseUrl="http://localhost:5000/specialTiles"
+const baseUrl2="http://localhost:5000/scores"
 
 const BOARD_SIZE = 15;
 
 
 const ScrabbleBoard = () => {
   const [SPECIAL_TILES, setSpecialTiles]= useState(null);
+  
 
   useEffect(()=>{
     fetch(baseUrl)
@@ -34,7 +36,6 @@ const getRandomLetters = (count) => {
   return Array.from({ length: count }, () => LETTERS_POOL[Math.floor(Math.random() * LETTERS_POOL.length)]);
 };
 
-  
 
   const [rackTiles, setRackTiles] = useState({
     1: getRandomLetters(7),
@@ -44,14 +45,19 @@ const getRandomLetters = (count) => {
   const [playerTurn, setPlayerTurn] = useState(1);
   const [scores, setScores] = useState({ 1: 0, 2: 0 });
 
-  const getLetterScore = (letter) => {
-    const scores = {
-      'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2, 'H': 4, 'I': 1,
-      'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1, 'O': 1, 'P': 3, 'Q': 10, 'R': 1,
-      'S': 1, 'T': 1, 'U': 1, 'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10
+  //fetch scores data from database
+    useEffect(()=>{
+      fetch(baseUrl)
+      .then((r)=>r.json())
+      .then((data)=>setScores(data))
+      .catch((err)=>console.error("Error fetching scores", err));
+    
+    }, []);
+
+    const getLetterScore = (letter) => {
+      return scores[letter] || 0;
     };
-    return scores[letter] || 0;
-  };
+
 
   function moveTile(id, position) {
     setBoard((prevBoard) => {
